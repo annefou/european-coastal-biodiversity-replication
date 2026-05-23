@@ -30,27 +30,30 @@ nbclient = "*"
 ipykernel = "*"
 # --- pipeline driver ---
 snakemake = "*"
-# --- replace/extend with the deps your replication needs ---
-# Examples (uncomment as needed):
-# statsmodels = "*"          # GLM/GLMM regression
-# scikit-learn = "*"         # classical ML
-# pyproj = "*"               # CRS + map projections
-# cartopy = "*"              # geographic plotting
-# netcdf4 = "*"              # NetCDF I/O — preferred over .npz for arrays (see DOMAIN.md)
-# zarr = "*"                 # Zarr — preferred for arrays >2 GB or cloud-archived (see DOMAIN.md)
-# cdsapi = "*"               # Copernicus Climate Data Store
-# copernicusmarine = "*"     # Copernicus Marine Service
-# healpix-geo = "*"          # HEALPix on geo data — preferred (use nest=True — see DOMAIN.md)
-# healpy = "*"               # HEALPix on pure-sphere (astrophysics) only
-# rasterio = "*"             # raster I/O
-# geopandas = "*"            # vector I/O
-# dask = "*"                 # out-of-core / parallel
+
+# --- study-specific: wave + atmospheric data access ---
+copernicusmarine = "*"       # CMEMS waves (WAVERYS, IBI, NWS, MED) — needs ~/.copernicusmarine credentials
+cdsapi = "*"                 # ERA5 winds for context maps and storm-track figures
+
+# --- study-specific: gridded I/O and parallelism ---
+netcdf4 = "*"                # NetCDF I/O — preferred over .npz for arrays (see DOMAIN.md)
+dask = "*"                   # out-of-core / parallel — CMEMS slices are large
+
+# --- study-specific: vector + geographic plotting ---
+geopandas = "*"              # Natura 2000 polygons + SDF joins
+pyogrio = "*"                # faster geopandas reader for GPKG / shapefile
+cartopy = "*"                # regional storm-basin maps
+pyproj = "*"                 # CRS + map projections
+
+# --- study-specific: regridding ---
+# xesmf depends on the ESMF C library. If it fails to solve on a platform,
+# fall back to xarray.interp (already in xarray) — bilinear-only but
+# adequate for inter-product comparison at site polygons.
+xesmf = "*"
 
 # Pip-only deps go in [pypi-dependencies]. Conda-forge is preferred where available.
-# [pypi-dependencies]
-# pygbif = "*"               # GBIF occurrences
-# polytope-client = "*"      # Destination Earth Climate DT
-# earthkit-data = "*"
+[pypi-dependencies]
+pygbif = "*"                 # GBIF occurrence DOIs (sanity-check overlays only)
 
 [feature.docs.dependencies]
 mystmd = "*"
