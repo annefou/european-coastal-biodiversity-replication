@@ -1,13 +1,13 @@
 {
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
-  "name": "{{REPO_NAME}}",
-  "description": "{{REPO_DESCRIPTION}}",
+  "name": "european-coastal-biodiversity-replication",
+  "description": "Does CMEMS wave product choice change biodiversity-exposure attribution at European Natura 2000 sites? A FORRT replication chain extending Loveland et al. 2024.",
   "version": "0.1.0",
-  "dateCreated": "{{RELEASE_DATE}}",
-  "dateModified": "{{RELEASE_DATE}}",
+  "dateCreated": "2026-05-23",
+  "dateModified": "2026-05-23",
   "license": "https://spdx.org/licenses/MIT",
-  "codeRepository": "https://github.com/{{REPO_ORG}}/{{REPO_NAME}}",
+  "codeRepository": "https://github.com/annefou/european-coastal-biodiversity-replication",
   "identifier": "{{ZENODO_DOI}}",
   "@id": "{{ZENODO_DOI}}",
   "programmingLanguage": {
@@ -19,12 +19,12 @@
   "author": [
     {
       "@type": "Person",
-      "givenName": "{{AUTHOR_GIVEN}}",
-      "familyName": "{{AUTHOR_FAMILY}}",
-      "@id": "{{AUTHOR_ORCID}}",
+      "givenName": "Anne",
+      "familyName": "Fouilloux",
+      "@id": "https://orcid.org/0000-0002-1784-2920",
       "affiliation": {
         "@type": "Organization",
-        "name": "{{AUTHOR_AFFILIATION}}"
+        "name": "Lifewatch-ERIC, Spain"
       }
     }
   ],
@@ -37,9 +37,9 @@
   ],
   "referencePublication": {
     "@type": "ScholarlyArticle",
-    "name": "{{PAPER_TITLE}}",
-    "datePublished": "{{PAPER_YEAR}}",
-    "@id": "https://doi.org/{{PAPER_DOI}}"
+    "name": "Efficacy of reduced order source terms for a coupled wave-circulation model in the Gulf of Mexico",
+    "datePublished": "2024",
+    "@id": "https://doi.org/10.1016/j.ocemod.2024.102387"
   },
   "isPartOf": {
     "@type": "Organization",

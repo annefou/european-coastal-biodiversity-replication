@@ -2,13 +2,13 @@
 
 > This is a working scratchpad for the paper-analysis phase. The output of this file feeds the Quote / AIDA / Claim drafts. It is not itself a nanopub.
 
-**Reference paper:** {{PAPER_TITLE}}
+**Reference paper:** Efficacy of reduced order source terms for a coupled wave-circulation model in the Gulf of Mexico
 
-**DOI:** {{PAPER_DOI}}
+**DOI:** 10.1016/j.ocemod.2024.102387
 
 **Authors:** _add._
 
-**Year:** {{PAPER_YEAR}}
+**Year:** 2024
 
 ## Headline claim
 

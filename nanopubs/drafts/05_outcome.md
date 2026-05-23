@@ -33,13 +33,13 @@ URI of the Replication Study published in step 04. Pull from `nanopubs/PUBLISHED
 ### Repository URL (text input, required)
 
 ```
-https://github.com/{{REPO_ORG}}/{{REPO_NAME}}
+https://github.com/annefou/european-coastal-biodiversity-replication
 ```
 
 ### Completion date (date picker, required)
 
 ```
-{{RELEASE_DATE}}
+2026-05-23
 ```
 
 ### Validation status (dropdown, required)
