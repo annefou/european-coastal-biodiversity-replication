@@ -5,7 +5,7 @@
   "description": "Does CMEMS wave product choice change biodiversity-exposure attribution at European Natura 2000 sites? A FORRT replication chain extending Loveland et al. 2024.",
   "version": "0.1.0",
   "dateCreated": "2026-05-23",
-  "dateModified": "2026-05-23",
+  "dateModified": "2026-05-24",
   "license": "https://spdx.org/licenses/MIT",
   "codeRepository": "https://github.com/annefou/european-coastal-biodiversity-replication",
   "identifier": "{{ZENODO_DOI}}",
@@ -33,7 +33,14 @@
     "reproducibility",
     "FORRT",
     "nanopublication",
-    "Science-Live"
+    "Science-Live",
+    "wave reanalysis",
+    "Copernicus Marine",
+    "WAVERYS",
+    "Natura 2000",
+    "biodiversity exposure",
+    "storm waves",
+    "significant wave height"
   ],
   "referencePublication": {
     "@type": "ScholarlyArticle",

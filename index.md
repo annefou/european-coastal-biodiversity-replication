@@ -1,14 +1,16 @@
 # european-coastal-biodiversity-replication
 
-> **Efficacy of reduced order source terms for a coupled wave-circulation model in the Gulf of Mexico** — replication study.
->
-> Reference paper: [10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)
+> **Does the choice of CMEMS wave reanalysis product change biodiversity exposure attribution at European Natura 2000 marine sites during storm landfall?**
 
-This repository is a self-contained replication of the headline claim from the reference paper above. It produces:
+A question-rooted FORRT replication study comparing the global **WAVERYS** wave reanalysis against the matched **regional CMEMS** products (IBI, North-West Shelf, Mediterranean) over three storms — Xynthia (2010), Xaver (2013), Gloria (2020). It **qualifies** Loveland et al. 2024 ([10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)) by testing the analogous product-choice question in a different domain and three physically distinct regimes.
+
+**Finding:** the product choice materially changes exposure attribution at 26.7% of biodiversity-weighted sites, but strongly regime-dependently — robust in the shallow North Sea, marginal in the open Bay of Biscay. Outcome: PartiallySupported.
+
+This repository produces:
 
 - A reproducible computational pipeline (Snakefile + notebooks).
-- A FORRT-tagged nanopublication chain on the [Science Live platform](https://platform.sciencelive4all.org), documenting the claim, the replication design, and the outcome with full provenance.
-- A Zenodo-archived release (source + container image) with a citable DOI.
+- A FORRT-tagged nanopublication chain on the [Science Live platform](https://platform.sciencelive4all.org), documenting the question, the replication design, and the outcome with full provenance.
+- Zenodo-archived data + software releases with citable DOIs.
 
 ## Quick start
 
@@ -27,12 +29,11 @@ docker run --rm ghcr.io/annefou/european-coastal-biodiversity-replication:latest
 
 ## Structure
 
-- `paper/` — the source paper PDF (drop yours in there).
-- `notebooks/` — jupytext `.py` notebooks that drive the pipeline.
-- `data/` — downloaded by `notebooks/01_data_download.py`, never committed.
+- `notebooks/` — jupytext `.py` notebooks that drive the pipeline (01 download → 02 clean → 03 analysis → 04 figures).
+- `data/` — downloaded by `notebooks/01_data_download.py` (or fetched from the Zenodo deposit), never committed.
 - `nanopubs/` — drafts of the FORRT chain field-by-field, plus the published-URI registry.
 - `docs/` — operating manuals (FORRT form fields, chain decision tree, claim-type vocabulary).
-- `figures/` — curated figures used in the Jupyter Book.
+- `figures/` — figures used in this Jupyter Book.
 
 ## Nanopublication chain
 
@@ -40,7 +41,8 @@ The published chain is listed in [`nanopubs/PUBLISHED.md`](nanopubs/PUBLISHED.md
 
 ## Citation
 
-If you use this work, please cite both:
+If you use this work, please cite:
 
-- This software: [`CITATION.cff`](CITATION.cff) → DOI [{{ZENODO_DOI}}]({{ZENODO_DOI}}).
-- The original paper: [10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387).
+- This software: [`CITATION.cff`](CITATION.cff) → concept DOI [{{ZENODO_DOI}}]({{ZENODO_DOI}}).
+- The data deposit: [10.5281/zenodo.20364376](https://doi.org/10.5281/zenodo.20364376).
+- The prior work this study qualifies (Loveland et al. 2024): [10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387).

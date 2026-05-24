@@ -10,7 +10,7 @@ authors:
 repository-code: "https://github.com/annefou/european-coastal-biodiversity-replication"
 license: MIT
 version: "0.1.0"
-date-released: "2026-05-23"
+date-released: "2026-05-24"
 # After your first GitHub release the Zenodo integration mints a concept DOI.
 # Replace this once available (run /init-template again or edit by hand):
 doi: "{{ZENODO_DOI}}"
@@ -24,6 +24,13 @@ keywords:
   - FORRT
   - nanopublication
   - Science-Live
+  - wave reanalysis
+  - Copernicus Marine
+  - WAVERYS
+  - Natura 2000
+  - biodiversity exposure
+  - storm waves
+  - significant wave height
 references:
   - type: article
     title: "Efficacy of reduced order source terms for a coupled wave-circulation model in the Gulf of Mexico"

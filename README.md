@@ -10,14 +10,21 @@
 [![Science Live](https://img.shields.io/badge/Science%20Live-nanopub%20chain-purple)](nanopubs/PUBLISHED.md)
 [![RO-Crate](https://img.shields.io/badge/RO--Crate-1.2-orange)](ro-crate-metadata.json)
 
-> **Efficacy of reduced order source terms for a coupled wave-circulation model in the Gulf of Mexico** — replication study.
-> Reference paper: [10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)
+> **Does the choice of CMEMS wave reanalysis product change biodiversity exposure attribution at European Natura 2000 marine sites during storm landfall?**
 
-This is a self-contained replication of the headline claim of the reference paper. It produces a reproducible computational pipeline, a Zenodo-archived release with a citable DOI, and a FORRT-tagged nanopublication chain on the [Science Live platform](https://platform.sciencelive4all.org).
+A question-rooted FORRT replication study. It compares the global **WAVERYS** wave reanalysis against the matched **regional CMEMS** products (IBI, North-West Shelf, Mediterranean) over three storms — Xynthia (2010, French Atlantic), Xaver (2013, North Sea), Gloria (2020, NW Mediterranean) — and asks whether the product choice changes which coastal Natura 2000 sites are flagged as wave-exposed. It **qualifies** the source-term-efficacy argument of Loveland et al. 2024 ([10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)) by testing the analogous product-choice question in a different domain (biodiversity exposure) and three physically distinct regimes.
+
+It produces a reproducible computational pipeline, a Zenodo-archived data deposit + software release with citable DOIs, and a FORRT-tagged nanopublication chain on the [Science Live platform](https://platform.sciencelive4all.org).
+
+### What this study found
+
+The product choice **materially changes exposure attribution, but strongly regime-dependently**. Across 327 biodiversity-weighted Natura 2000 marine sites, the storm-window peak wave-height difference exceeds the joint observational noise floor (~0.4 m) at **26.7%** of sites — but this splits sharply by regime: **robust in the shallow North Sea** (Xaver, 38.5% and still 34% at a stricter 0.8 m threshold), intermediate in the Mediterranean (Gloria, 29.4%), and **marginal in the open Bay of Biscay** (Xynthia, 17.2%, collapsing to 3% at 0.8 m). The effect is strongest where nearshore wave transformation dominates and the two products share least model lineage. Outcome: **PartiallySupported**.
 
 ---
 
 ## Quick start
+
+**Full reproduction from source** (needs free Copernicus Marine credentials — see [`data/README.md`](data/README.md) — and downloads several GB incl. the EEA Natura 2000 archive):
 
 ```bash
 git clone https://github.com/annefou/european-coastal-biodiversity-replication.git
@@ -26,9 +33,17 @@ pixi install
 pixi run snakemake --cores 1
 ```
 
+**Fast path** (no credentials, ~74 MB) — fetch the pinned intermediates from the Zenodo data deposit ([10.5281/zenodo.20364376](https://doi.org/10.5281/zenodo.20364376)) and run only the analysis + figures:
+
+```bash
+pixi run python scripts/fetch_intermediates.py
+pixi run python notebooks/03_analysis.py
+pixi run python notebooks/04_figures.py
+```
+
 (Pixi resolves `pixi.toml` against the per-platform `pixi.lock`, installs the env under `.pixi/`, and provides `pixi run` for any task without needing an `activate` step.)
 
-Or with Docker:
+Or with Docker (runs the fast path out of the box):
 
 ```bash
 docker run --rm ghcr.io/annefou/european-coastal-biodiversity-replication:latest
@@ -113,10 +128,13 @@ For lower-level nanopub work — retraction, superseding, batch publishing — s
 
 ## Citation
 
-If you use this work, please cite both:
+If you use this work, please cite:
 
-- This software: [`CITATION.cff`](CITATION.cff) → DOI [{{ZENODO_DOI}}]({{ZENODO_DOI}})
-- The original paper: [10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)
+- This software: [`CITATION.cff`](CITATION.cff) → concept DOI [{{ZENODO_DOI}}]({{ZENODO_DOI}})
+- The data deposit: [10.5281/zenodo.20364376](https://doi.org/10.5281/zenodo.20364376)
+- The prior work this study qualifies (Loveland et al. 2024): [10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)
+
+Wave data generated using E.U. Copernicus Marine Service Information; biodiversity data © European Environment Agency (Natura 2000). See [`data/README.md`](data/README.md).
 
 ## Acknowledgements
 

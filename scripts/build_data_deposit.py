@@ -40,7 +40,8 @@ BUNDLE_FILES = (
     + [f"data/clean/{s}_aligned.nc" for s in STORMS]
     + [f"data/clean/{s}_regional_native.nc" for s in STORMS]
     + [f"data/clean/{s}_n2000_sites.parquet" for s in STORMS]
-    + ["results/headline_stats.csv", "results/per_site_delta.csv", "results/summary.csv"]
+    + ["results/headline_stats.csv", "results/per_site_delta.csv",
+       "results/threshold_sensitivity.csv", "results/summary.csv"]
 )
 
 # --- provenance metadata (verified against the CMEMS / EEA catalogs 2026-05-24) ---
