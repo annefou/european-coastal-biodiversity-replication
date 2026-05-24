@@ -109,7 +109,7 @@ For each (storm, site):
 
 1. **Compute the storm-window exposure metric.** Recommended primary metric: peak Hs at the site during the storm window, computed as the spatial mean of grid cells within the polygon at the temporal max. Secondary: integrated wave action `∫ Hs² dt` over the storm window.
 2. **Compute the inter-product delta:** `delta_hs = regional_hs - waverys_hs` (signed) and `|delta_hs|` (absolute).
-3. **Apply the per-site biodiversity weight:** `w_site = log1p(n_annex1_habitats × n_annex2_species)`. The `log1p` avoids over-weighting one or two mega-biodiverse sites (Wadden Sea has 100+ habitats/species recorded, a Greek islet has 2–3).
+3. **Apply the per-site biodiversity weight:** `w_site = log1p(n_annex1_habitats + n_annex2_species)`. The `log1p` avoids over-weighting one or two mega-biodiverse sites (Wadden Sea has 100+ habitats/species recorded, a Greek islet has 2–3). *(Revised 2026-05-24 in Phase 3 from the originally-planned multiplicative `log1p(habitats × species)`: the product zeroed 91% of bird SPAs — Annex II species, no Annex I habitat listing — so the additive form is used instead. Commit `2cd131e`.)*
 4. **Compute the headline statistic:** weighted fraction of sites where `|delta_hs| > X`, where X is set per section 4.
 
 Save:

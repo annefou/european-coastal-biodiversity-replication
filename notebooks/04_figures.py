@@ -216,3 +216,30 @@ ax.legend(fontsize=8)
 fig.tight_layout()
 fig.savefig(FIGURES_DIR / "biodiversity_vs_delta.png", dpi=150, bbox_inches="tight")
 plt.show()
+
+# %% [markdown]
+# ## Figure 4 — threshold-X sensitivity
+#
+# How the biodiversity-weighted exceedance fraction varies with the threshold X.
+# A near-flat line = a robust finding (the signal survives a stricter threshold);
+# a steeply falling line = a marginal finding driven by near-threshold sites.
+
+# %%
+sens = pd.read_csv(RESULTS_DIR / "threshold_sensitivity.csv")
+fig, ax = plt.subplots(figsize=(7, 4.5))
+for storm in ACTIVE_STORMS:
+    if storm in sens.columns:
+        ax.plot(sens["threshold_X_m"], sens[storm], marker="o",
+                label=STORM_LABELS.get(storm, storm))
+ax.plot(sens["threshold_X_m"], sens["aggregated"], marker="s",
+        color="black", linewidth=2, label="aggregated")
+ax.axvline(0.4, linestyle="--", color="gray", linewidth=0.8)
+ax.text(0.4, ax.get_ylim()[1] * 0.95, " headline X = 0.4 m", fontsize=8, va="top")
+ax.set_xlabel("Threshold X  (m,  |Δ Hs| exceedance cutoff)")
+ax.set_ylabel("Biodiversity-weighted fraction\nof sites exceeding X")
+ax.set_title("Robustness of the exposure-difference finding to threshold X")
+ax.set_ylim(0, max(0.5, float(sens[["aggregated"]].max().iloc[0]) * 1.2))
+ax.legend(fontsize=8)
+fig.tight_layout()
+fig.savefig(FIGURES_DIR / "threshold_sensitivity.png", dpi=150, bbox_inches="tight")
+plt.show()

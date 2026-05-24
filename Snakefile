@@ -23,8 +23,10 @@ rule all:
         f"{FIGURES}/main_result.png",
         f"{FIGURES}/headline_stats_bars.png",
         f"{FIGURES}/biodiversity_vs_delta.png",
+        f"{FIGURES}/threshold_sensitivity.png",
         f"{RESULTS}/headline_stats.csv",
         f"{RESULTS}/per_site_delta.csv",
+        f"{RESULTS}/threshold_sensitivity.csv",
 
 
 # ---------- 01: Data download ----------
@@ -68,6 +70,7 @@ rule analysis:
     output:
         f"{RESULTS}/per_site_delta.csv",
         f"{RESULTS}/headline_stats.csv",
+        f"{RESULTS}/threshold_sensitivity.csv",
         f"{RESULTS}/summary.csv",
     log:
         f"{RESULTS}/logs/03_analysis.log",
@@ -80,6 +83,7 @@ rule figures:
     input:
         f"{RESULTS}/per_site_delta.csv",
         f"{RESULTS}/headline_stats.csv",
+        f"{RESULTS}/threshold_sensitivity.csv",
         expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
         expand(f"{DATA}/clean/{{storm}}_regional_native.nc", storm=ACTIVE_STORMS),
         expand(f"{DATA}/clean/{{storm}}_n2000_sites.parquet", storm=ACTIVE_STORMS),
@@ -87,6 +91,7 @@ rule figures:
         f"{FIGURES}/main_result.png",
         f"{FIGURES}/headline_stats_bars.png",
         f"{FIGURES}/biodiversity_vs_delta.png",
+        f"{FIGURES}/threshold_sensitivity.png",
     log:
         f"{RESULTS}/logs/04_figures.log",
     shell:

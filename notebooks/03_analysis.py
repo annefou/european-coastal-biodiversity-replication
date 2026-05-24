@@ -224,13 +224,43 @@ if len(df_all):
     )
 
 # %% [markdown]
+# ## Threshold-X sensitivity
+#
+# The headline uses X = 0.4 m (the joint observational noise floor). How robust
+# is the weighted fraction to that choice? Sweep X and report the
+# biodiversity-weighted exceedance fraction per storm + aggregated. A finding
+# that is robust across X is strong; one that collapses as X rises is marginal.
+
+# %%
+THRESHOLD_SWEEP = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+sensitivity_rows: list[dict] = []
+for X in THRESHOLD_SWEEP:
+    row = {"threshold_X_m": X}
+    for storm_key in ACTIVE_STORMS:
+        sub = df_all[df_all["storm"] == storm_key]
+        w = sub["weight"].sum()
+        row[storm_key] = (
+            float(sub.loc[sub["abs_delta_hs"] > X, "weight"].sum() / w)
+            if w else float("nan")
+        )
+    total_w = df_all["weight"].sum()
+    row["aggregated"] = (
+        float(df_all.loc[df_all["abs_delta_hs"] > X, "weight"].sum() / total_w)
+        if total_w else float("nan")
+    )
+    sensitivity_rows.append(row)
+
+# %% [markdown]
 # ## Persist results
 
 # %%
 pd.DataFrame(per_site_rows).to_csv(RESULTS_DIR / "per_site_delta.csv", index=False)
 pd.DataFrame(headline_rows).to_csv(RESULTS_DIR / "headline_stats.csv", index=False)
+pd.DataFrame(sensitivity_rows).to_csv(RESULTS_DIR / "threshold_sensitivity.csv", index=False)
 # `summary.csv` keeps Snakefile + Jupyter Book TOC stable.
 pd.DataFrame(headline_rows).to_csv(RESULTS_DIR / "summary.csv", index=False)
 
 print("\n--- headline_stats.csv ---")
 print(pd.DataFrame(headline_rows).to_string(index=False))
+print("\n--- threshold_sensitivity.csv ---")
+print(pd.DataFrame(sensitivity_rows).to_string(index=False))

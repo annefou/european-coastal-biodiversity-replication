@@ -62,7 +62,7 @@ Per `docs/phase1-plan.md` § Addendum (2026-05-23), three derisks were run befor
 These were settled before this draft was written; do not re-open without strong reason:
 
 - **Regridding direction:** both grids, split by figure (WAVERYS for headline, native regional for spatial maps).
-- **Biodiversity weighting function:** `log1p(habitats × species)` from Standard Data Form.
+- **Biodiversity weighting function:** `log1p(habitats + species)` from Standard Data Form. *(Revised 2026-05-24 from the original multiplicative `log1p(habitats × species)`, which zeroed 91% of bird SPAs — sites with Annex II species but no Annex I habitat listing. Additive counts a site if it protects either.)*
 - **Repo scope:** single repo, single chain; multi-storm aggregation is a dimension of the headline statistic, not three separate chains.
 - **Research Software nanopub (step 07):** deferred to Phase 4. Decide whether to publish once the analysis modular structure is known.
 
