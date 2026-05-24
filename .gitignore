@@ -65,3 +65,7 @@ docker-image.tar.gz
 
 # Snakemake per-rule run logs (ephemeral)
 results/logs/
+
+# Zenodo data-deposit bundle (built by scripts/build_data_deposit.py)
+data_deposit/
+data_deposit.zip
