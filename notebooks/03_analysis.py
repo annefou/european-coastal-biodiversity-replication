@@ -28,10 +28,14 @@
 # noise floors (`docs/phase1-plan.md` § A3). Headline = `0.4 m` rounded;
 # sensitivity = region-specific `{xynthia: 0.46, xaver: 0.39, gloria: 0.41}`.
 #
-# **Biodiversity weight:** `w_site = log1p(n_annex1_habitats × n_annex2_species)`.
-# The `log1p` avoids over-weighting the mega-biodiverse sites (Wadden Sea
-# has 100+ habitats+species; small Greek islets have 2–3) — see
-# `docs/phase1-plan.md` § 5.3.
+# **Biodiversity weight:** `w_site = log1p(n_annex1_habitats + n_annex2_species)`.
+# Additive, not multiplicative: a multiplicative `habitats × species` collapses
+# to zero whenever either count is zero, which zeroed 91% of bird SPAs (Special
+# Protection Areas carry Annex II species but no Annex I habitat listing) — 31%
+# of all sites, including a 298-species SPA. The additive form counts a site as
+# long as it protects either habitats or species. `log1p` still damps the
+# mega-biodiverse sites (Wadden Sea 100+; small islets 2–3). See
+# `docs/phase1-plan.md` § 5.3 (decision revised 2026-05-24).
 #
 # **Verify before drafting nanopubs:** the FORRT Replication Study's
 # Methodology field is drafted *from this code* — do not extrapolate. See
@@ -148,7 +152,7 @@ for storm_key in ACTIVE_STORMS:
         rpeak, riwa = site_metrics(aligned, "regional_hs", site.geometry)
         delta_hs = rpeak - wpeak
         weight = float(
-            np.log1p(site["n_annex1_habitats"] * site["n_annex2_species"])
+            np.log1p(site["n_annex1_habitats"] + site["n_annex2_species"])
         )
         per_site_rows.append(
             {

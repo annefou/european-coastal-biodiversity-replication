@@ -173,7 +173,7 @@ for storm, sub in per_site.groupby("storm"):
         label=STORM_LABELS.get(storm, storm), alpha=0.7, s=22,
     )
 ax.axhline(0.4, linestyle="--", color="gray", linewidth=0.8, label="X = 0.4 m")
-ax.set_xlabel("Biodiversity weight  w = log1p(habitats × species)")
+ax.set_xlabel("Biodiversity weight  w = log1p(habitats + species)")
 ax.set_ylabel("|Δ Hs|  (m)   regional − WAVERYS,  at storm-window peak")
 ax.set_title("Biodiversity richness vs inter-product wave-height delta")
 ax.legend(fontsize=8)
