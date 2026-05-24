@@ -11,7 +11,7 @@
 Slug becomes part of the nanopub URI. Use kebab-case.
 
 ```
-
+wave-product-changes-exposure-attribution
 ```
 
 ### Label of the claim (text input, required)
@@ -19,34 +19,34 @@ Slug becomes part of the nanopub URI. Use kebab-case.
 A descriptive title (not a sentence). Used for searches/discovery.
 
 ```
-
+Wave-product choice changes storm-wave exposure attribution at European Natura 2000 marine sites
 ```
 
 ### Search for an AIDA sentence (search/select, required)
 
 URI of the AIDA published in step 02. Pull from `nanopubs/PUBLISHED.md`.
 
-> _If the AIDA was published via Nanodash (`w3id.org/np/...` namespace), the platform's search may not find it — paste the URI manually._
-
 ```
-
+<AIDA URI from nanopubs/PUBLISHED.md step 02 — publish 02 first, then paste here>
 ```
 
 ### Type of FORRT claim (dropdown, required)
 
-Pick one. See `docs/claim-type-vocabulary.md` for the seven options and how to choose.
+Pick one. See `docs/claim-type-vocabulary.md`.
 
 - [ ] computational performance
 - [ ] scalability
 - [ ] data quality
 - [ ] data governance
-- [ ] descriptive pattern
+- [x] **descriptive pattern**
 - [ ] model performance
 - [ ] statistical significance
 
+Rationale: the claim asserts an **observed empirical relationship** across a population of sites — that the inter-product wave-height difference, biodiversity-weighted, exceeds the observational noise floor at a measurable fraction of Natura 2000 marine sites. That is a `descriptive pattern` (an observed distribution/relationship), not a model-accuracy metric and not a significance-test result. *(Alternative if you prefer the data-pipeline framing: `data quality` — "does the input-product choice preserve the downstream exposure attribution"; `descriptive pattern` is the better fit because the headline is an observed cross-site distribution, not a preprocessing-fidelity claim.)*
+
 ### Source URI (text input, optional)
 
-Full URL form: `https://doi.org/...` (NOT bare DOI).
+Full URL form: `https://doi.org/...` (NOT bare DOI). The prior work this claim relates to:
 
 ```
 https://doi.org/10.1016/j.ocemod.2024.102387
