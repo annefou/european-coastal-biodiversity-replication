@@ -86,7 +86,9 @@ STORMS = {
         # German Bight, Doggerbank southern margin. Sites reach 10°E / 56.8°N.
         "bbox": {"lon_min": 1.5, "lon_max": 10.5, "lat_min": 50.5, "lat_max": 57.0},
         "waverys_dataset": "cmems_mod_glo_wav_my_0.2deg_PT3H-i",
-        "regional_dataset": "cmems_mod_nws_wav_my_0.027deg-0.014deg_PT1H-i",
+        # NWS wave reanalysis uses the legacy dataset ID (verified in the
+        # MEDSEA/NWS catalog 2026-05-24); covers 1980–2025, ~1.5 km, WAVEWATCH III.
+        "regional_dataset": "MetO-NWS-WAV-RAN",
         "regional_label": "NWS reanalysis WAV 004_015 ~1.5 km hourly",
     },
     "gloria": {
@@ -100,7 +102,10 @@ STORMS = {
         # offshore Catalonia.
         "bbox": {"lon_min": -2.75, "lon_max": 5.5, "lat_min": 37.0, "lat_max": 44.5},
         "waverys_dataset": "cmems_mod_glo_wav_my_0.2deg_PT3H-i",
-        "regional_dataset": "cmems_mod_med_wav_my_4.2km-2D_PT1H-i",
+        # MED hourly wave reanalysis; version 202511 covers 1985-01 → 2026-04,
+        # so Storm Gloria (Jan 2020) is in coverage (the phase1-plan A1 gap
+        # concern was resolved by the product's reanalysis-to-present extension).
+        "regional_dataset": "cmems_mod_med_wav_my_4.2km_PT1H-i",
         "regional_label": "MED MY 1/24° hourly",
     },
 }
@@ -112,8 +117,8 @@ WAVE_VARIABLES = ["VHM0", "VTPK", "VMDR"]
 
 # Which storms to actually fetch this run. Start with Xynthia only; uncomment
 # the other two once the Xynthia round-trip is validated.
-ACTIVE_STORMS = ["xynthia"]
-# ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
+# ACTIVE_STORMS = ["xynthia"]
+ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
 
 # %% [markdown]
 # ## Download helper

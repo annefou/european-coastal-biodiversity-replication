@@ -54,8 +54,8 @@ CLEAN_DIR = Path("../data/clean")
 RESULTS_DIR = Path("../results")
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
-ACTIVE_STORMS = ["xynthia"]
-# ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
+# ACTIVE_STORMS = ["xynthia"]
+ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
 
 # Headline threshold (m, see § A3): one rounded value for the aggregated stat.
 THRESHOLD_X_HEADLINE = 0.4

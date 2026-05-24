@@ -10,7 +10,7 @@
 
 # Storms that the four notebooks actually process. To enable Xaver / Gloria,
 # update ACTIVE_STORMS here AND in each notebook (they read their own list).
-ACTIVE_STORMS = ["xynthia"]
+ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
 
 NOTEBOOKS = "notebooks"
 DATA = "data"

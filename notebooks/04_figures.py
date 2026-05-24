@@ -51,8 +51,8 @@ RESULTS_DIR = Path("../results")
 FIGURES_DIR = Path("../figures")
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
-ACTIVE_STORMS = ["xynthia"]
-# ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
+# ACTIVE_STORMS = ["xynthia"]
+ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
 
 STORM_LABELS = {
     "xynthia": "Xynthia (French Atlantic, Feb 2010 — IBI)",

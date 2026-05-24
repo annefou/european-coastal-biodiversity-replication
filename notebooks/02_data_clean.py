@@ -49,8 +49,8 @@ CLEAN_DIR = Path("../data/clean")
 CLEAN_DIR.mkdir(parents=True, exist_ok=True)
 
 # Mirrors ACTIVE_STORMS in 01_data_download.py — keep these two in sync.
-ACTIVE_STORMS = ["xynthia"]
-# ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
+# ACTIVE_STORMS = ["xynthia"]
+ACTIVE_STORMS = ["xynthia", "xaver", "gloria"]
 
 # Drop the 24 h pre-storm spin-up padding before computing exposure metrics.
 STORM_WINDOWS = {
