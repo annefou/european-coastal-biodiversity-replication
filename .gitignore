@@ -62,3 +62,6 @@ docker-image.tar.gz
 .claude/.cache/
 .claude/local/
 .claude/scheduled_tasks.lock
+
+# Snakemake per-rule run logs (ephemeral)
+results/logs/
