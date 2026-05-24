@@ -1,13 +1,16 @@
-# Snakefile — orchestrates the replication pipeline end-to-end.
+# Snakefile — European coastal biodiversity replication pipeline.
 #
-# Replace the placeholder rules with your actual replication steps. The
-# canonical pattern is one rule per pipeline stage, and each rule wraps a
-# notebook executed via jupytext (so the notebook stays the source of truth
-# and the Snakefile just sequences them).
+# Each rule wraps a jupytext notebook executed in place so the notebooks
+# remain the source of truth and `snakemake --cores 1` end-to-end works.
 #
 # Usage:
-#   snakemake --cores 1                  # run everything
-#   snakemake --cores 1 -n               # dry run
+#   snakemake --cores 1            # run everything
+#   snakemake --cores 1 -n         # dry run
+#   snakemake --cores 1 figures    # just the final figures step
+
+# Storms that the four notebooks actually process. To enable Xaver / Gloria,
+# update ACTIVE_STORMS here AND in each notebook (they read their own list).
+ACTIVE_STORMS = ["xynthia"]
 
 NOTEBOOKS = "notebooks"
 DATA = "data"
@@ -17,48 +20,74 @@ FIGURES = "figures"
 
 rule all:
     input:
-        # Replace with your actual final artefacts:
         f"{FIGURES}/main_result.png",
-        f"{RESULTS}/summary.csv",
+        f"{FIGURES}/headline_stats_bars.png",
+        f"{FIGURES}/biodiversity_vs_delta.png",
+        f"{RESULTS}/headline_stats.csv",
+        f"{RESULTS}/per_site_delta.csv",
 
 
 # ---------- 01: Data download ----------
-# Every replication MUST be self-contained: data is downloaded by the notebook,
-# never assumed to exist locally. See CLAUDE.md § Self-contained data.
+# Per CLAUDE.md § Self-contained data downloads — every input is fetched
+# from a citable source (CMEMS, EEA). CMEMS reads
+# ~/.copernicusmarine/.copernicusmarine-credentials (created from
+# COPERNICUS_CREDENTIALS_BASE64 in CI).
 rule data_download:
     output:
-        f"{DATA}/raw/dataset.zip",
+        expand(f"{DATA}/raw/waverys_{{storm}}.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/raw/regional_{{storm}}.nc", storm=ACTIVE_STORMS),
+        f"{DATA}/raw/Natura2000_end2024.zip",
+        f"{DATA}/raw/sources.json",
     log:
         f"{RESULTS}/logs/01_data_download.log",
     shell:
-        f"cd {{NOTEBOOKS}} && jupytext --to notebook --execute 01_data_download.py 2>&1 | tee ../{{log}}"
+        "cd {NOTEBOOKS} && jupytext --to notebook --execute 01_data_download.py 2>&1 | tee ../{log}"
 
 
 # ---------- 02: Data clean ----------
 rule data_clean:
     input:
-        f"{DATA}/raw/dataset.zip",
+        expand(f"{DATA}/raw/waverys_{{storm}}.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/raw/regional_{{storm}}.nc", storm=ACTIVE_STORMS),
+        f"{DATA}/raw/Natura2000_end2024.zip",
     output:
-        f"{DATA}/clean/dataset.parquet",
+        expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_regional_native.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_n2000_sites.geojson", storm=ACTIVE_STORMS),
+    log:
+        f"{RESULTS}/logs/02_data_clean.log",
     shell:
-        f"cd {{NOTEBOOKS}} && jupytext --to notebook --execute 02_data_clean.py"
+        "cd {NOTEBOOKS} && jupytext --to notebook --execute 02_data_clean.py 2>&1 | tee ../{log}"
 
 
 # ---------- 03: Analysis ----------
 rule analysis:
     input:
-        f"{DATA}/clean/dataset.parquet",
+        expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_n2000_sites.geojson", storm=ACTIVE_STORMS),
     output:
+        f"{RESULTS}/per_site_delta.csv",
+        f"{RESULTS}/headline_stats.csv",
         f"{RESULTS}/summary.csv",
+    log:
+        f"{RESULTS}/logs/03_analysis.log",
     shell:
-        f"cd {{NOTEBOOKS}} && jupytext --to notebook --execute 03_analysis.py"
+        "cd {NOTEBOOKS} && jupytext --to notebook --execute 03_analysis.py 2>&1 | tee ../{log}"
 
 
 # ---------- 04: Figures ----------
 rule figures:
     input:
-        f"{RESULTS}/summary.csv",
+        f"{RESULTS}/per_site_delta.csv",
+        f"{RESULTS}/headline_stats.csv",
+        expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_regional_native.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_n2000_sites.geojson", storm=ACTIVE_STORMS),
     output:
         f"{FIGURES}/main_result.png",
+        f"{FIGURES}/headline_stats_bars.png",
+        f"{FIGURES}/biodiversity_vs_delta.png",
+    log:
+        f"{RESULTS}/logs/04_figures.log",
     shell:
-        f"cd {{NOTEBOOKS}} && jupytext --to notebook --execute 04_figures.py"
+        "cd {NOTEBOOKS} && jupytext --to notebook --execute 04_figures.py 2>&1 | tee ../{log}"
