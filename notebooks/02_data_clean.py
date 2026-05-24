@@ -28,7 +28,7 @@
 #    (polygons, EPSG:3035) with the tabular CSVs (Standard Data Form — Annex I
 #    habitats + Annex II species + marine flag). Reproject to WGS84, filter to
 #    marine sites, clip per storm bbox, write
-#    `data/clean/<storm>_n2000_sites.geojson` (small enough to ship beside the
+#    `data/clean/<storm>_n2000_sites.parquet` (small enough to ship beside the
 #    aligned NetCDF, simple enough to read in 03 without spatial-DB tooling).
 #
 # **Why NetCDF and not `.npz`** — see `DOMAIN.md` § Data formats. Self-describing,
@@ -347,11 +347,14 @@ for storm_key in ACTIVE_STORMS:
             f"wave bbox and will be under-sampled: {codes[:8]}"
             f"{'…' if len(codes) > 8 else ''}. Widen WAVE_BBOXES in 01+02."
         )
-    out = CLEAN_DIR / f"{storm_key}_n2000_sites.geojson"
+    # GeoParquet, not GeoJSON: ~8x smaller and preserves full CRS + geometry
+    # precision (GeoJSON truncates and is text-bloated). geopandas reads it
+    # back transparently with read_parquet.
+    out = CLEAN_DIR / f"{storm_key}_n2000_sites.parquet"
     storm_sites[
         ["SITECODE", "SITETYPE", "COUNTRY_CODE",
          "n_annex1_habitats", "n_annex2_species", "geometry"]
-    ].to_file(out, driver="GeoJSON")
+    ].to_parquet(out)
     print(
         f"  {storm_key}: {len(storm_sites):,} marine sites in bbox "
         f"(median habitats={int(np.median(storm_sites['n_annex1_habitats']))}, "

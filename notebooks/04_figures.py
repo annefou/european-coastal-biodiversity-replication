@@ -72,14 +72,31 @@ STORM_BBOXES = {
 # ## Figure 1 — regional storm-panel map
 
 # %%
+import matplotlib as mpl  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
+
 per_site = pd.read_csv(RESULTS_DIR / "per_site_delta.csv")
+
+# Shared scales across panels so the polygons are comparable storm-to-storm:
+# - delta fill: symmetric diverging, capped at the 95th percentile of |delta|
+#   (extend='both' flags the few larger outliers, e.g. the Xaver 4.9 m site).
+# - edge width: normalised by the global max biodiversity weight.
+DELTA_VMAX = float(np.ceil(np.nanpercentile(per_site["abs_delta_hs"], 95) * 2) / 2)
+WEIGHT_MAX = float(max(1.0, per_site["weight"].max()))
+delta_norm = mpl.colors.Normalize(vmin=-DELTA_VMAX, vmax=DELTA_VMAX)
+
+
+def _edge_lw(weights):
+    return weights.fillna(0) / WEIGHT_MAX * 2.0 + 0.3
+
 
 n_panels = len(ACTIVE_STORMS)
 fig, axes = plt.subplots(
     1, n_panels,
-    figsize=(7 * n_panels, 6),
+    figsize=(7 * n_panels, 6.5),
     subplot_kw={"projection": ccrs.PlateCarree()},
     squeeze=False,
+    layout="constrained",  # behaves with cartopy GeoAxes where tight_layout does not
 )
 axes = axes.ravel()
 
@@ -94,25 +111,24 @@ for ax, storm in zip(axes, ACTIVE_STORMS):
         ax=ax, transform=ccrs.PlateCarree(),
         cmap="viridis", add_colorbar=False, alpha=0.85,
     )
-    cb = fig.colorbar(pcm, ax=ax, shrink=0.7, label="Peak Hs regional (m)")
+    fig.colorbar(pcm, ax=ax, shrink=0.6, label="Peak Hs regional (m)")
     cs = peak_waverys.plot.contour(
         ax=ax, transform=ccrs.PlateCarree(),
         colors="white", linewidths=0.6, alpha=0.9, levels=6,
     )
     ax.clabel(cs, fontsize=7, fmt="%.1f")
 
-    sites = gpd.read_file(CLEAN_DIR / f"{storm}_n2000_sites.geojson")
+    sites = gpd.read_parquet(CLEAN_DIR / f"{storm}_n2000_sites.parquet")
     site_col = next(c for c in sites.columns if c.upper() == "SITECODE")
     df = per_site[per_site["storm"] == storm].set_index("site_code")
     sites = sites.merge(df, left_on=site_col, right_index=True, how="left")
-    # Diverging fill = signed delta (regional - waverys); edge ∝ biodiversity weight.
-    vmax = max(0.5, float(sites["delta_hs"].abs().max() if len(sites) else 0.5))
+    # Polygon fill = signed Hs delta (regional − WAVERYS); edge thickness ∝
+    # biodiversity weight. Both scales are shared across panels (see above).
     sites.plot(
         ax=ax, transform=ccrs.PlateCarree(),
-        column="delta_hs", cmap="RdBu_r", vmin=-vmax, vmax=vmax,
-        edgecolor="black",
-        linewidth=(sites["weight"].fillna(0) / max(1.0, sites["weight"].max()) * 1.5 + 0.3),
-        alpha=0.7, legend=False,
+        column="delta_hs", cmap="RdBu_r", norm=delta_norm,
+        edgecolor="black", linewidth=_edge_lw(sites["weight"]),
+        alpha=0.75, legend=False,
     )
 
     ax.add_feature(cfeature.LAND, facecolor="#f3f0e8", zorder=1)
@@ -123,11 +139,31 @@ for ax, storm in zip(axes, ACTIVE_STORMS):
     ax.set_title(STORM_LABELS[storm], fontsize=10)
     ax.gridlines(draw_labels=True, linewidth=0.3, alpha=0.5)
 
+# Shared diverging colorbar for the polygon delta fill — this is the headline
+# quantity, so it gets its own scale spanning all three panels.
+delta_sm = mpl.cm.ScalarMappable(norm=delta_norm, cmap="RdBu_r")
+cbar = fig.colorbar(
+    delta_sm, ax=axes, orientation="horizontal",
+    fraction=0.04, pad=0.06, extend="both", aspect=40,
+)
+cbar.set_label("Natura 2000 site fill: Hs delta, regional − WAVERYS (m)")
+
+# Proxy legend for the edge-width = biodiversity-weight encoding.
+legend_weights = [1.0, WEIGHT_MAX / 2, WEIGHT_MAX]
+handles = [
+    Line2D([0], [0], color="black", lw=_edge_lw(pd.Series([w])).iloc[0],
+           label=f"w ≈ {w:.1f}")
+    for w in legend_weights
+]
+axes[-1].legend(
+    handles=handles, title="Site edge: biodiversity\nweight log1p(hab.+sp.)",
+    loc="lower right", fontsize=7, title_fontsize=7, framealpha=0.9,
+)
+
 fig.suptitle(
     "WAVERYS vs regional CMEMS peak Hs around Natura 2000 marine sites",
-    fontsize=12, y=1.02,
+    fontsize=13,
 )
-fig.tight_layout()
 fig.savefig(FIGURES_DIR / "main_result.png", dpi=150, bbox_inches="tight")
 plt.show()
 

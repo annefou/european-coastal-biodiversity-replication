@@ -53,7 +53,7 @@ rule data_clean:
     output:
         expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
         expand(f"{DATA}/clean/{{storm}}_regional_native.nc", storm=ACTIVE_STORMS),
-        expand(f"{DATA}/clean/{{storm}}_n2000_sites.geojson", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_n2000_sites.parquet", storm=ACTIVE_STORMS),
     log:
         f"{RESULTS}/logs/02_data_clean.log",
     shell:
@@ -64,7 +64,7 @@ rule data_clean:
 rule analysis:
     input:
         expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
-        expand(f"{DATA}/clean/{{storm}}_n2000_sites.geojson", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_n2000_sites.parquet", storm=ACTIVE_STORMS),
     output:
         f"{RESULTS}/per_site_delta.csv",
         f"{RESULTS}/headline_stats.csv",
@@ -82,7 +82,7 @@ rule figures:
         f"{RESULTS}/headline_stats.csv",
         expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
         expand(f"{DATA}/clean/{{storm}}_regional_native.nc", storm=ACTIVE_STORMS),
-        expand(f"{DATA}/clean/{{storm}}_n2000_sites.geojson", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_n2000_sites.parquet", storm=ACTIVE_STORMS),
     output:
         f"{FIGURES}/main_result.png",
         f"{FIGURES}/headline_stats_bars.png",

@@ -46,7 +46,7 @@ data/
 └── clean/                            # gitignored, written by 02
     ├── <storm>_aligned.nc            # WAVERYS + regional on common grid
     ├── <storm>_regional_native.nc    # regional Hs on native grid (for maps)
-    └── <storm>_n2000_sites.geojson   # marine sites + Annex I/II counts
+    └── <storm>_n2000_sites.parquet  # marine sites + Annex I/II counts
 ```
 
 ## CI cache

@@ -142,7 +142,7 @@ headline_rows: list[dict] = []
 for storm_key in ACTIVE_STORMS:
     print(f"\n--- {storm_key} ---")
     aligned = xr.open_dataset(CLEAN_DIR / f"{storm_key}_aligned.nc")
-    sites = gpd.read_file(CLEAN_DIR / f"{storm_key}_n2000_sites.geojson")
+    sites = gpd.read_parquet(CLEAN_DIR / f"{storm_key}_n2000_sites.parquet")
 
     site_col = next(c for c in sites.columns if c.upper() == "SITECODE")
     threshold_region = THRESHOLD_X_PER_REGION[storm_key]
