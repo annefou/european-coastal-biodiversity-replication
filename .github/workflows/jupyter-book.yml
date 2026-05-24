@@ -66,20 +66,29 @@ jobs:
           cache: true
           environments: docs
 
+      # This job installs only the `docs` environment, which includes every
+      # default dependency plus mystmd — so run all steps with `-e docs`.
       - name: Convert .py notebooks to .ipynb
         if: steps.guard.outputs.skip != 'true'
         run: |
           for nb in notebooks/*.py; do
-            pixi run jupytext --to notebook "$nb"
+            pixi run -e docs jupytext --to notebook "$nb"
           done
 
-      # Glob, not a hard-coded list — new notebooks are picked up automatically.
-      - name: Execute notebooks
+      - name: Fetch pinned intermediates from Zenodo
+        if: steps.guard.outputs.skip != 'true'
+        run: pixi run -e docs python scripts/fetch_intermediates.py
+
+      # Execute only the analysis + figure notebooks — they read the fetched
+      # intermediates and produce the plots the book renders. The download (01)
+      # and clean (02) notebooks need CMEMS credentials + multi-GB inputs, so
+      # they are rendered as un-executed code (documentation of those steps).
+      - name: Execute analysis + figure notebooks
         if: steps.guard.outputs.skip != 'true'
         run: |
-          for nb in notebooks/*.ipynb; do
+          for nb in notebooks/03_analysis.ipynb notebooks/04_figures.ipynb; do
             echo "::group::Executing $nb"
-            pixi run jupyter execute --inplace "$nb"
+            pixi run -e docs jupyter execute --inplace "$nb"
             echo "::endgroup::"
           done
 

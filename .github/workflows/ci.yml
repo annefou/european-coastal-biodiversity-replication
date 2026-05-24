@@ -49,32 +49,28 @@ jobs:
           cache: true
 
       # ----- credentials (uncomment + add the matching GitHub secret) -----
-      #
-      # - name: Set up Copernicus Marine credentials
-      #   if: ${{ secrets.COPERNICUS_CREDENTIALS_BASE64 != '' }}
-      #   run: |
-      #     mkdir -p ~/.copernicusmarine
-      #     echo "${{ secrets.COPERNICUS_CREDENTIALS_BASE64 }}" | base64 -d \
-      #       > ~/.copernicusmarine/.copernicusmarine-credentials
-      #
-      # - name: Set up CDS credentials
-      #   if: ${{ secrets.CDSAPI_KEY != '' }}
-      #   run: |
-      #     echo "url: https://cds.climate.copernicus.eu/api/v2" > ~/.cdsapirc
-      #     echo "key: ${{ secrets.CDSAPI_KEY }}" >> ~/.cdsapirc
+      # Fast path: instead of re-running the credentialled multi-GB CMEMS/EEA
+      # downloads (notebooks 01+02), pull the pinned intermediates from the
+      # Zenodo data deposit and run only analysis + figures (03+04). No secrets,
+      # no large downloads. The from-source path (01+02) is exercised locally /
+      # on demand; see scripts/fetch_intermediates.py and DATA_PROVENANCE.md.
 
-      # ----- data caching (uncomment + adjust path/key) -----
-      #
-      # - name: Cache input data
-      #   id: cache_data
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: data/raw
-      #     key: input-data-v1
-
-      - name: Run pipeline
+      - name: Notebooks parse (jupytext round-trip, no execution)
         if: steps.guard.outputs.skip != 'true'
-        run: pixi run snakemake --cores 1
+        run: |
+          for nb in notebooks/*.py; do
+            pixi run jupytext --to notebook "$nb" -o "/tmp/$(basename "${nb%.py}").ipynb"
+          done
+
+      - name: Fetch pinned intermediates from Zenodo
+        if: steps.guard.outputs.skip != 'true'
+        run: pixi run python scripts/fetch_intermediates.py
+
+      - name: Run analysis + figures
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          pixi run jupytext --to notebook --execute notebooks/03_analysis.py
+          pixi run jupytext --to notebook --execute notebooks/04_figures.py
 
       - name: Upload results
         if: always() && steps.guard.outputs.skip != 'true'

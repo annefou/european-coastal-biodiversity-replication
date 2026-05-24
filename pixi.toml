@@ -34,6 +34,7 @@ snakemake = "*"
 # --- study-specific: wave + atmospheric data access ---
 copernicusmarine = "*"       # CMEMS waves (WAVERYS, IBI, NWS, MED) — needs ~/.copernicusmarine credentials
 cdsapi = "*"                 # ERA5 winds for context maps and storm-track figures
+requests = "*"               # EEA bulk download (01) + Zenodo fetch (scripts/fetch_intermediates.py)
 
 # --- study-specific: gridded I/O and parallelism ---
 netcdf4 = "*"                # NetCDF I/O — preferred over .npz for arrays (see DOMAIN.md)
