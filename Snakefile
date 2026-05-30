@@ -53,8 +53,8 @@ rule data_clean:
         expand(f"{DATA}/raw/regional_{{storm}}.nc", storm=ACTIVE_STORMS),
         f"{DATA}/raw/Natura2000_end2024.zip",
     output:
-        expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
-        expand(f"{DATA}/clean/{{storm}}_regional_native.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_waverys.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_regional.nc", storm=ACTIVE_STORMS),
         expand(f"{DATA}/clean/{{storm}}_n2000_sites.parquet", storm=ACTIVE_STORMS),
     log:
         f"{RESULTS}/logs/02_data_clean.log",
@@ -65,7 +65,8 @@ rule data_clean:
 # ---------- 03: Analysis ----------
 rule analysis:
     input:
-        expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_waverys.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_regional.nc", storm=ACTIVE_STORMS),
         expand(f"{DATA}/clean/{{storm}}_n2000_sites.parquet", storm=ACTIVE_STORMS),
     output:
         f"{RESULTS}/per_site_delta.csv",
@@ -84,8 +85,8 @@ rule figures:
         f"{RESULTS}/per_site_delta.csv",
         f"{RESULTS}/headline_stats.csv",
         f"{RESULTS}/threshold_sensitivity.csv",
-        expand(f"{DATA}/clean/{{storm}}_aligned.nc", storm=ACTIVE_STORMS),
-        expand(f"{DATA}/clean/{{storm}}_regional_native.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_waverys.nc", storm=ACTIVE_STORMS),
+        expand(f"{DATA}/clean/{{storm}}_regional.nc", storm=ACTIVE_STORMS),
         expand(f"{DATA}/clean/{{storm}}_n2000_sites.parquet", storm=ACTIVE_STORMS),
     output:
         f"{FIGURES}/main_result.png",

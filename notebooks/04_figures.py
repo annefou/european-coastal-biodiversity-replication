@@ -74,6 +74,7 @@ STORM_BBOXES = {
 # %%
 import matplotlib as mpl  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 
 per_site = pd.read_csv(RESULTS_DIR / "per_site_delta.csv")
 
@@ -101,17 +102,17 @@ fig, axes = plt.subplots(
 axes = axes.ravel()
 
 for ax, storm in zip(axes, ACTIVE_STORMS):
-    aligned = xr.open_dataset(CLEAN_DIR / f"{storm}_aligned.nc")
-    regional_native = xr.open_dataset(CLEAN_DIR / f"{storm}_regional_native.nc")
+    waverys = xr.open_dataset(CLEAN_DIR / f"{storm}_waverys.nc")
+    regional = xr.open_dataset(CLEAN_DIR / f"{storm}_regional.nc")
 
-    peak_waverys = aligned["waverys_hs"].max(dim="time")
-    peak_regional = regional_native["regional_hs_native"].max(dim="time")
+    peak_waverys = waverys["waverys_hs"].max(dim="time")
+    peak_regional = regional["regional_hs"].max(dim="time")
 
     pcm = peak_regional.plot.pcolormesh(
         ax=ax, transform=ccrs.PlateCarree(),
         cmap="viridis", add_colorbar=False, alpha=0.85,
     )
-    fig.colorbar(pcm, ax=ax, shrink=0.6, label="Peak Hs regional (m)")
+    fig.colorbar(pcm, ax=ax, shrink=0.6, label="Peak Hs regional, native grid (m)")
     cs = peak_waverys.plot.contour(
         ax=ax, transform=ccrs.PlateCarree(),
         colors="white", linewidths=0.6, alpha=0.9, levels=6,
@@ -122,14 +123,29 @@ for ax, storm in zip(axes, ACTIVE_STORMS):
     site_col = next(c for c in sites.columns if c.upper() == "SITECODE")
     df = per_site[per_site["storm"] == storm].set_index("site_code")
     sites = sites.merge(df, left_on=site_col, right_index=True, how="left")
-    # Polygon fill = signed Hs delta (regional − WAVERYS); edge thickness ∝
-    # biodiversity weight. Both scales are shared across panels (see above).
-    sites.plot(
-        ax=ax, transform=ccrs.PlateCarree(),
-        column="delta_hs", cmap="RdBu_r", norm=delta_norm,
-        edgecolor="black", linewidth=_edge_lw(sites["weight"]),
-        alpha=0.75, legend=False,
-    )
+
+    # Tier 3 (neither product resolves) — out of scope: faint grey outline.
+    neither = sites[sites["tier"] == "neither"]
+    if len(neither):
+        neither.plot(ax=ax, transform=ccrs.PlateCarree(),
+                     facecolor="none", edgecolor="grey", linewidth=0.3, alpha=0.5)
+    # Tier 2 (only one product resolves) — product choice categorically decisive:
+    # gold hatch (almost always the fine regional sees a coast WAVERYS calls land).
+    decisive = sites[sites["tier"].isin(["regional_only", "waverys_only"])]
+    if len(decisive):
+        decisive.plot(ax=ax, transform=ccrs.PlateCarree(),
+                      facecolor="gold", edgecolor="black", hatch="xxx",
+                      linewidth=0.4, alpha=0.75)
+    # Tier 1 (both resolve) — fill = signed Hs delta (regional − WAVERYS),
+    # edge thickness ∝ biodiversity weight. Scales shared across panels.
+    both = sites[sites["tier"] == "both"]
+    if len(both):
+        both.plot(
+            ax=ax, transform=ccrs.PlateCarree(),
+            column="delta_hs", cmap="RdBu_r", norm=delta_norm,
+            edgecolor="black", linewidth=_edge_lw(both["weight"]),
+            alpha=0.75, legend=False,
+        )
 
     ax.add_feature(cfeature.LAND, facecolor="#f3f0e8", zorder=1)
     ax.add_feature(cfeature.COASTLINE, linewidth=0.5, zorder=2)
@@ -148,17 +164,16 @@ cbar = fig.colorbar(
 )
 cbar.set_label("Natura 2000 site fill: Hs delta, regional − WAVERYS (m)")
 
-# Proxy legend for the edge-width = biodiversity-weight encoding.
+# Legend: edge-width = biodiversity weight, plus the Tier-2 "decisive" marker.
 legend_weights = [1.0, WEIGHT_MAX / 2, WEIGHT_MAX]
 handles = [
     Line2D([0], [0], color="black", lw=_edge_lw(pd.Series([w])).iloc[0],
-           label=f"w ≈ {w:.1f}")
+           label=f"biodiv. weight w ≈ {w:.1f}")
     for w in legend_weights
 ]
-axes[-1].legend(
-    handles=handles, title="Site edge: biodiversity\nweight log1p(hab.+sp.)",
-    loc="lower right", fontsize=7, title_fontsize=7, framealpha=0.9,
-)
+handles.append(Patch(facecolor="gold", edgecolor="black", hatch="xxx",
+                     label="product choice decisive\n(one product sees land)"))
+axes[-1].legend(handles=handles, loc="lower right", fontsize=7, framealpha=0.9)
 
 fig.suptitle(
     "WAVERYS vs regional CMEMS peak Hs around Natura 2000 marine sites",
@@ -176,23 +191,26 @@ fig, ax = plt.subplots(figsize=(7, 4.5))
 colors = ["#2b6cb0" if s != "aggregated" else "#c05621" for s in headline["storm"]]
 ax.bar(
     headline["storm"],
-    headline["weighted_frac_exceeds_X_headline"],
+    headline["weighted_frac_differs_headline"],
     color=colors,
 )
 threshold_str = (
     headline.loc[0, "threshold_X_headline_m"]
     if len(headline) else 0.4
 )
-ax.set_ylabel(f"Biodiversity-weighted fraction\n|Δ Hs| > {threshold_str} m")
+ax.set_ylabel(
+    "Biodiversity-weighted fraction of\n"
+    f"resolvable sites where attribution differs\n(X = {threshold_str} m)"
+)
 ax.set_title(
-    "Inter-product wave-height delta at Natura 2000 marine sites\n"
-    "(WAVERYS global vs CMEMS regional)"
+    "Does the wave-product choice change exposure attribution?\n"
+    "(WAVERYS global vs CMEMS regional, native grids)"
 )
 ax.set_ylim(0, 1)
 for i, row in headline.iterrows():
     ax.text(
-        i, row["weighted_frac_exceeds_X_headline"] + 0.02,
-        f"n={row['n_sites']}", ha="center", fontsize=8,
+        i, row["weighted_frac_differs_headline"] + 0.02,
+        f"n={int(row['n_resolvable'])}", ha="center", fontsize=8,
     )
 fig.tight_layout()
 fig.savefig(FIGURES_DIR / "headline_stats_bars.png", dpi=150, bbox_inches="tight")

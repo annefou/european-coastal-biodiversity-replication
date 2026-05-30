@@ -4,7 +4,7 @@
 
 A question-rooted FORRT replication study comparing the global **WAVERYS** wave reanalysis against the matched **regional CMEMS** products (IBI, North-West Shelf, Mediterranean) over three storms — Xynthia (2010), Xaver (2013), Gloria (2020). It **qualifies** Loveland et al. 2024 ([10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)) by testing the analogous product-choice question in a different domain and three physically distinct regimes.
 
-**Finding:** the product choice materially changes exposure attribution at 26.7% of biodiversity-weighted sites, but strongly regime-dependently — robust in the shallow North Sea, marginal in the open Bay of Biscay. Outcome: PartiallySupported.
+**Finding:** the product choice changes biodiversity exposure attribution at **73% of resolvable biodiversity-weighted sites** — present in all three regimes (Xaver 83%, Gloria 82%, Xynthia 60%), robust across the threshold sweep, decomposing as 27% agree / 44% magnitude-disagree / 29% categorically decisive (one product places the site in water, the other on land). About 16% of sites are too sub-grid for either basin-scale product (coverage caveat). Outcome: **Validated**; CiTO `qualifies` Loveland 2024.
 
 This repository produces:
 

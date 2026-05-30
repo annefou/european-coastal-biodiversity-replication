@@ -37,8 +37,8 @@ STORMS = ["xynthia", "xaver", "gloria"]
 BUNDLE_FILES = (
     [f"data/raw/waverys_{s}.nc" for s in STORMS]
     + [f"data/raw/regional_{s}.nc" for s in STORMS]
-    + [f"data/clean/{s}_aligned.nc" for s in STORMS]
-    + [f"data/clean/{s}_regional_native.nc" for s in STORMS]
+    + [f"data/clean/{s}_waverys.nc" for s in STORMS]
+    + [f"data/clean/{s}_regional.nc" for s in STORMS]
     + [f"data/clean/{s}_n2000_sites.parquet" for s in STORMS]
     + ["results/headline_stats.csv", "results/per_site_delta.csv",
        "results/threshold_sensitivity.csv", "results/summary.csv"]
@@ -131,8 +131,8 @@ preservation + fast-path layer.
 raw/      per-storm WAVERYS + regional CMEMS wave subsets (NetCDF, the exact
           spatial/temporal slices the study used)
 clean/    analysis-ready intermediates:
-            <storm>_aligned.nc          WAVERYS + regional Hs on a common grid
-            <storm>_regional_native.nc  regional Hs on its native grid (maps)
+            <storm>_waverys.nc          WAVERYS peak-Hs input, native 0.2 deg grid
+            <storm>_regional.nc         regional peak-Hs input, native fine grid
             <storm>_n2000_sites.parquet marine Natura 2000 sites + Annex I/II counts
 results/   headline_stats.csv, per_site_delta.csv, summary.csv
 ```

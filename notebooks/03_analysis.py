@@ -17,12 +17,17 @@
 # # 03 — Analysis
 #
 # Computes the headline statistic: the biodiversity-weighted fraction of
-# Natura 2000 marine sites where the WAVERYS-vs-regional peak-Hs delta exceeds
-# threshold X during the storm window. Per `docs/phase1-plan.md` § 3-4.
+# **resolvable** Natura 2000 marine sites where the choice between WAVERYS and
+# the regional product changes the attributed storm-wave exposure. Per
+# `docs/phase1-plan.md` § 3-4.
 #
-# **Per-site exposure metric:** spatial mean of grid cells inside the polygon
-# at the temporal max (= peak Hs at the site during the storm window).
-# Secondary metric: integrated wave action ∫ Hs² dt over the window.
+# **Per-site exposure metric:** each product is sampled on its OWN native grid
+# (WAVERYS 0.2°, regional fine) — peak Hs is the spatial mean of the wet cells
+# inside the polygon at the storm-window temporal max. We do NOT regrid the
+# regional down to WAVERYS: that would smooth away the nearshore difference and
+# drop ~half the sites to coastal NaN. Three tiers result — both resolve
+# (continuous delta), only one resolves (product choice decisive), neither
+# resolves (out of scope, reported as coverage). See the sampling section.
 #
 # **Threshold X:** region-specific, derived from CMEMS QUID joint observational
 # noise floors (`docs/phase1-plan.md` § A3). Headline = `0.4 m` rounded;
@@ -48,10 +53,6 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from shapely.geometry import box
-
-# np.trapz was renamed np.trapezoid in numpy 2.0; bind whichever exists.
-_trapezoid = getattr(np, "trapezoid", None) or np.trapz
 
 # %%
 CLEAN_DIR = Path("../data/clean")
@@ -68,92 +69,110 @@ THRESHOLD_X_PER_REGION = {"xynthia": 0.46, "xaver": 0.39, "gloria": 0.41}
 
 
 # %% [markdown]
-# ## Per-site exposure extraction
+# ## Per-site exposure extraction — native grid, three tiers
 #
-# For each polygon: pick the grid cells whose centres fall inside the polygon,
-# compute the temporal max of Hs over the storm window per cell, then take the
-# spatial mean. Falls back to the nearest single cell if the polygon is too
-# small to enclose any grid centre (typical for some <0.04° N2000 islets at
-# WAVERYS 0.2° resolution).
+# Each product is sampled on its OWN native grid (WAVERYS 0.2°, regional fine):
+# the per-site peak Hs is the spatial mean, over the storm window's temporal max,
+# of the **wet** (non-NaN) cells whose centres fall inside the polygon. If no wet
+# cell lies inside the polygon, we look one grid cell out (nearest wet cell) — so
+# a site touching a wet cell is still sampled, but a site buried inside a single
+# land-masked cell is NOT given a value pulled from far offshore.
+#
+# A site is **resolved** by a product if that product has a wet cell in/adjacent
+# to the polygon. This yields three tiers:
+#
+# - **both** — both products resolve the site → continuous inter-product delta.
+# - **regional_only** / **waverys_only** — only one product resolves it. This is
+#   the product choice being *categorically decisive*: one product attributes a
+#   wave field to the site, the other reports land / no estimate. (Almost always
+#   `regional_only`: the fine regional resolves a coast the 0.2° WAVERYS sees as
+#   land.) These count as "attribution differs".
+# - **neither** — too small/sheltered for either basin-scale product → out of
+#   scope; excluded from the denominator and reported as coverage.
 
 # %%
-def _grid_cells_in_polygon(
-    ds: xr.Dataset, polygon
-) -> tuple[np.ndarray, np.ndarray]:
-    """Return (lat_idx, lon_idx) of grid cells whose centres fall in polygon.
+def sample_native(peak: np.ndarray, lons: np.ndarray, lats: np.ndarray,
+                  polygon) -> tuple[float, bool]:
+    """Polygon-mean peak Hs over the product's own wet cells. Returns
+    (hs, resolved).
 
-    If none, return the single nearest-centre cell so the site is never
-    silently dropped from the statistic.
+    A product "resolves" a site only if the site's own location is wet in that
+    product's grid — NO searching outward to nearest wet cells, which on the
+    0.2° WAVERYS grid would pull open-ocean values from ~22 km offshore into
+    sheltered coastal sites. Concretely:
+      - if any grid-cell centre falls inside the polygon → mean of the wet ones;
+      - else (sub-grid site) → the single cell that contains the polygon
+        centroid, used only if it is wet.
+    Returns resolved=False when the product places the site on land. That is the
+    physically meaningful Tier-2 signal: the product cannot represent the site.
     """
-    lons = ds["longitude"].values
-    lats = ds["latitude"].values
     minx, miny, maxx, maxy = polygon.bounds
-    lon_in = np.where((lons >= minx) & (lons <= maxx))[0]
-    lat_in = np.where((lats >= miny) & (lats <= maxy))[0]
-    if len(lon_in) == 0 or len(lat_in) == 0:
-        # Polygon falls between grid centres — nearest neighbour.
-        cx, cy = polygon.centroid.x, polygon.centroid.y
-        return (
-            np.array([int(np.argmin(np.abs(lats - cy)))]),
-            np.array([int(np.argmin(np.abs(lons - cx)))]),
+    li = np.where((lons >= minx) & (lons <= maxx))[0]
+    la = np.where((lats >= miny) & (lats <= maxy))[0]
+    if len(li) and len(la):
+        sub = peak[np.ix_(la, li)]
+        lo_grid, la_grid = np.meshgrid(lons[li], lats[la])
+        inside = (
+            gpd.GeoSeries(gpd.points_from_xy(lo_grid.ravel(), la_grid.ravel()))
+            .within(polygon).values.reshape(sub.shape)
         )
-    # Vectorised point-in-polygon check against the candidate centres.
-    lo_grid, la_grid = np.meshgrid(lons[lon_in], lats[lat_in])
-    pts = gpd.GeoSeries(gpd.points_from_xy(lo_grid.ravel(), la_grid.ravel()))
-    inside = pts.within(polygon).values.reshape(la_grid.shape)
-    if not inside.any():
-        cx, cy = polygon.centroid.x, polygon.centroid.y
-        return (
-            np.array([int(np.argmin(np.abs(lats - cy)))]),
-            np.array([int(np.argmin(np.abs(lons - cx)))]),
-        )
-    li, oi = np.where(inside)
-    return lat_in[li], lon_in[oi]
+        wet = sub[inside & np.isfinite(sub)]
+        if wet.size:
+            return float(wet.mean()), True
+    # Sub-grid site: the single cell containing the centroid, used only if wet.
+    cx, cy = polygon.centroid.x, polygon.centroid.y
+    j = int(np.argmin(np.abs(lats - cy)))
+    i = int(np.argmin(np.abs(lons - cx)))
+    v = peak[j, i]
+    return (float(v), True) if np.isfinite(v) else (float("nan"), False)
 
 
-def site_metrics(ds: xr.Dataset, hs_var: str, polygon) -> tuple[float, float]:
-    """Return (peak_hs, integrated_wave_action) for a polygon over the window.
-
-    peak_hs: spatial mean over polygon cells, at the cell-wise temporal max.
-    integrated_wave_action: time-integrated ∫ Hs² dt (units: m² · h),
-    aggregated as the spatial mean of per-cell integrals.
-    """
-    lat_idx, lon_idx = _grid_cells_in_polygon(ds, polygon)
-    hs = ds[hs_var].isel(latitude=lat_idx, longitude=lon_idx)
-    peak_per_cell = hs.max(dim="time")
-    peak_hs = float(peak_per_cell.mean().values)
-
-    # Convert time to hours since window start for the integral.
-    t = hs["time"].values.astype("datetime64[s]").astype("float64")
-    dt_hours = (t - t[0]) / 3600.0
-    hs_squared = hs ** 2
-    integrated_per_cell = _trapezoid(hs_squared.values, x=dt_hours, axis=0)
-    iwa = float(np.mean(integrated_per_cell))
-    return peak_hs, iwa
+def peak_field(nc_path: Path, var: str):
+    """Load a native product, return (peak_Hs_2d, lons, lats)."""
+    ds = xr.open_dataset(nc_path)
+    peak = ds[var].max(dim="time")
+    return peak.values, ds["longitude"].values, ds["latitude"].values
 
 
 # %% [markdown]
 # ## Per-storm loop
+#
+# "Attribution differs" at a site means EITHER the products both resolve it and
+# their peak-Hs delta exceeds threshold X, OR only one product resolves it (the
+# product choice is categorically decisive). The headline is the
+# biodiversity-weighted fraction of **resolvable** sites where attribution
+# differs; sites neither product resolves are excluded and reported as coverage.
 
 # %%
+def _differs(tier: str, abs_delta: float, X: float) -> bool:
+    if tier == "both":
+        return abs_delta > X
+    return tier in ("regional_only", "waverys_only")  # only one resolves → decisive
+
+
 per_site_rows: list[dict] = []
 headline_rows: list[dict] = []
 
 for storm_key in ACTIVE_STORMS:
     print(f"\n--- {storm_key} ---")
-    aligned = xr.open_dataset(CLEAN_DIR / f"{storm_key}_aligned.nc")
+    w_peak, w_lons, w_lats = peak_field(CLEAN_DIR / f"{storm_key}_waverys.nc", "waverys_hs")
+    r_peak, r_lons, r_lats = peak_field(CLEAN_DIR / f"{storm_key}_regional.nc", "regional_hs")
     sites = gpd.read_parquet(CLEAN_DIR / f"{storm_key}_n2000_sites.parquet")
-
     site_col = next(c for c in sites.columns if c.upper() == "SITECODE")
-    threshold_region = THRESHOLD_X_PER_REGION[storm_key]
 
     for _, site in sites.iterrows():
-        wpeak, wiwa = site_metrics(aligned, "waverys_hs", site.geometry)
-        rpeak, riwa = site_metrics(aligned, "regional_hs", site.geometry)
-        delta_hs = rpeak - wpeak
-        weight = float(
-            np.log1p(site["n_annex1_habitats"] + site["n_annex2_species"])
-        )
+        whs, wres = sample_native(w_peak, w_lons, w_lats, site.geometry)
+        rhs, rres = sample_native(r_peak, r_lons, r_lats, site.geometry)
+        if wres and rres:
+            tier, delta = "both", rhs - whs
+        elif rres:
+            tier, delta = "regional_only", float("nan")
+        elif wres:
+            tier, delta = "waverys_only", float("nan")
+        else:
+            tier, delta = "neither", float("nan")
+        abs_delta = abs(delta)
+        weight = float(np.log1p(site["n_annex1_habitats"] + site["n_annex2_species"]))
         per_site_rows.append(
             {
                 "storm": storm_key,
@@ -161,93 +180,96 @@ for storm_key in ACTIVE_STORMS:
                 "n_annex1_habitats": int(site["n_annex1_habitats"]),
                 "n_annex2_species": int(site["n_annex2_species"]),
                 "weight": weight,
-                "peak_hs_waverys": wpeak,
-                "peak_hs_regional": rpeak,
-                "delta_hs": delta_hs,
-                "abs_delta_hs": abs(delta_hs),
-                "iwa_waverys": wiwa,
-                "iwa_regional": riwa,
-                "exceeds_X_headline": abs(delta_hs) > THRESHOLD_X_HEADLINE,
-                "exceeds_X_regional": abs(delta_hs) > threshold_region,
+                "tier": tier,
+                "resolvable": tier != "neither",
+                "peak_hs_waverys": whs,
+                "peak_hs_regional": rhs,
+                "delta_hs": delta,
+                "abs_delta_hs": abs_delta,
+                "differs_headline": _differs(tier, abs_delta, THRESHOLD_X_HEADLINE),
+                "differs_region": _differs(tier, abs_delta, THRESHOLD_X_PER_REGION[storm_key]),
             }
         )
 
-    # Per-storm headline = weighted fraction.
+
+def _headline_row(df: pd.DataFrame, storm: str, threshold_region) -> dict:
+    res = df[df["resolvable"]]
+    w_res = res["weight"].sum()
+    both = df[df["tier"] == "both"]
+    tier_counts = df["tier"].value_counts().to_dict()
+    return {
+        "storm": storm,
+        "n_sites": len(df),
+        "n_resolvable": len(res),
+        "n_tier_both": tier_counts.get("both", 0),
+        "n_tier_regional_only": tier_counts.get("regional_only", 0),
+        "n_tier_waverys_only": tier_counts.get("waverys_only", 0),
+        "n_tier_neither": tier_counts.get("neither", 0),
+        "threshold_X_headline_m": THRESHOLD_X_HEADLINE,
+        "weighted_frac_differs_headline": (
+            float(res.loc[res["differs_headline"], "weight"].sum() / w_res)
+            if w_res else float("nan")
+        ),
+        "threshold_X_region_m": threshold_region,
+        "weighted_frac_differs_region": (
+            float(res.loc[res["differs_region"], "weight"].sum() / w_res)
+            if w_res else float("nan")
+        ),
+        # Coverage: biodiversity-weighted fraction of sites that are resolvable.
+        "weighted_coverage": (
+            float(w_res / df["weight"].sum()) if df["weight"].sum() else float("nan")
+        ),
+        # Magnitude stats over Tier-1 (both-resolved) sites, where delta is defined.
+        "median_abs_delta_hs_both": float(both["abs_delta_hs"].median()) if len(both) else float("nan"),
+        "max_abs_delta_hs_both": float(both["abs_delta_hs"].max()) if len(both) else float("nan"),
+    }
+
+
+for storm_key in ACTIVE_STORMS:
     df = pd.DataFrame([r for r in per_site_rows if r["storm"] == storm_key])
-    total_w = df["weight"].sum()
-    if total_w == 0:
-        weighted_frac_headline = float("nan")
-        weighted_frac_region = float("nan")
-    else:
-        weighted_frac_headline = float(
-            (df.loc[df["exceeds_X_headline"], "weight"].sum()) / total_w
-        )
-        weighted_frac_region = float(
-            (df.loc[df["exceeds_X_regional"], "weight"].sum()) / total_w
-        )
-    headline_rows.append(
-        {
-            "storm": storm_key,
-            "n_sites": len(df),
-            "threshold_X_headline_m": THRESHOLD_X_HEADLINE,
-            "weighted_frac_exceeds_X_headline": weighted_frac_headline,
-            "threshold_X_region_m": threshold_region,
-            "weighted_frac_exceeds_X_region": weighted_frac_region,
-            "median_abs_delta_hs": float(df["abs_delta_hs"].median()),
-            "max_abs_delta_hs": float(df["abs_delta_hs"].max()),
-        }
-    )
+    row = _headline_row(df, storm_key, THRESHOLD_X_PER_REGION[storm_key])
+    headline_rows.append(row)
     print(
-        f"  n_sites={len(df)}  weighted_frac(>{THRESHOLD_X_HEADLINE} m)="
-        f"{weighted_frac_headline:.3f}  median|Δ|={df['abs_delta_hs'].median():.3f} m"
+        f"  resolvable={row['n_resolvable']}/{row['n_sites']} "
+        f"(both={row['n_tier_both']}, regional_only={row['n_tier_regional_only']}, "
+        f"neither={row['n_tier_neither']})  "
+        f"weighted_frac_differs(>{THRESHOLD_X_HEADLINE} m)="
+        f"{row['weighted_frac_differs_headline']:.3f}"
     )
 
-# Aggregated row across all active storms — biodiversity-weighted across sites.
 df_all = pd.DataFrame(per_site_rows)
 if len(df_all):
-    total_w = df_all["weight"].sum()
-    headline_rows.append(
-        {
-            "storm": "aggregated",
-            "n_sites": len(df_all),
-            "threshold_X_headline_m": THRESHOLD_X_HEADLINE,
-            "weighted_frac_exceeds_X_headline": float(
-                df_all.loc[df_all["exceeds_X_headline"], "weight"].sum() / total_w
-            ),
-            "threshold_X_region_m": None,
-            "weighted_frac_exceeds_X_region": float(
-                df_all.loc[df_all["exceeds_X_regional"], "weight"].sum() / total_w
-            ),
-            "median_abs_delta_hs": float(df_all["abs_delta_hs"].median()),
-            "max_abs_delta_hs": float(df_all["abs_delta_hs"].max()),
-        }
-    )
+    headline_rows.append(_headline_row(df_all, "aggregated", None))
 
 # %% [markdown]
 # ## Threshold-X sensitivity
 #
-# The headline uses X = 0.4 m (the joint observational noise floor). How robust
-# is the weighted fraction to that choice? Sweep X and report the
-# biodiversity-weighted exceedance fraction per storm + aggregated. A finding
-# that is robust across X is strong; one that collapses as X rises is marginal.
+# Over **resolvable** sites, how does the biodiversity-weighted "attribution
+# differs" fraction vary with X? Only the both-resolved (Tier-1) contribution
+# responds to X; the only-one-resolves (Tier-2) sites are decisive regardless of
+# threshold, so they form a floor. A near-flat curve = a robust finding.
 
 # %%
 THRESHOLD_SWEEP = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 sensitivity_rows: list[dict] = []
+
+
+def _frac_differs_at(df: pd.DataFrame, X: float) -> float:
+    res = df[df["resolvable"]]
+    w = res["weight"].sum()
+    if not w:
+        return float("nan")
+    differs = res["tier"].isin(["regional_only", "waverys_only"]) | (
+        (res["tier"] == "both") & (res["abs_delta_hs"] > X)
+    )
+    return float(res.loc[differs, "weight"].sum() / w)
+
+
 for X in THRESHOLD_SWEEP:
     row = {"threshold_X_m": X}
     for storm_key in ACTIVE_STORMS:
-        sub = df_all[df_all["storm"] == storm_key]
-        w = sub["weight"].sum()
-        row[storm_key] = (
-            float(sub.loc[sub["abs_delta_hs"] > X, "weight"].sum() / w)
-            if w else float("nan")
-        )
-    total_w = df_all["weight"].sum()
-    row["aggregated"] = (
-        float(df_all.loc[df_all["abs_delta_hs"] > X, "weight"].sum() / total_w)
-        if total_w else float("nan")
-    )
+        row[storm_key] = _frac_differs_at(df_all[df_all["storm"] == storm_key], X)
+    row["aggregated"] = _frac_differs_at(df_all, X)
     sensitivity_rows.append(row)
 
 # %% [markdown]
@@ -262,5 +284,7 @@ pd.DataFrame(headline_rows).to_csv(RESULTS_DIR / "summary.csv", index=False)
 
 print("\n--- headline_stats.csv ---")
 print(pd.DataFrame(headline_rows).to_string(index=False))
+print("\n--- threshold_sensitivity.csv ---")
+print(pd.DataFrame(sensitivity_rows).to_string(index=False))
 print("\n--- threshold_sensitivity.csv ---")
 print(pd.DataFrame(sensitivity_rows).to_string(index=False))

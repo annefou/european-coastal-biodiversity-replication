@@ -20,13 +20,11 @@ URI of the Outcome published in step 05. Pull from `nanopubs/PUBLISHED.md`.
 
 ##### Citation Type (dropdown)
 
-The Outcome's validation status is **PartiallySupported** → `qualifies`.
+`qualifies`. **Deliberately decoupled from the mechanical verdict→CiTO mapping.** The Outcome's validation status is `Validated` (the PICO claim is well supported, in all three regimes, robustly), which would mechanically map to `confirms` — but the chain does not confirm Loveland: it qualifies them in a different domain and regime. We tested the analogous product-/resolution-choice question for biodiversity exposure at European coastal Natura 2000 sites and found the choice matters at 73 percent of resolvable biodiversity-weighted sites; Loveland argued reduced-order source terms are efficacious for a coupled wave-circulation model in the Gulf of Mexico. Same broad question (does a simplified wave representation suffice?), different application, different answer. `qualifies` captures that honestly; `confirms` would be wrong.
 
 ```
 qualifies
 ```
-
-Rationale: the finding (the product choice changes exposure attribution robustly in shallow shelf seas but marginally in the open ocean) neither confirms nor disputes Loveland et al.'s source-term-efficacy argument — it qualifies it: the adequacy of a coarser or simplified wave representation is application- and regime-dependent.
 
 ##### DOI or other URL of the cited work (text input)
 

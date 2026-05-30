@@ -19,11 +19,10 @@
 # Two data flows:
 #
 # 1. **Wave products.** For each active storm: open WAVERYS + regional CMEMS
-#    NetCDFs from `01_data_download.py`, regrid regional → WAVERYS via bilinear
-#    interpolation, drop the spin-up padding, write
-#    `data/clean/<storm>_aligned.nc` (common-grid Hs pair) and
-#    `data/clean/<storm>_regional_native.nc` (regional Hs on its native grid,
-#    used by the spatial maps in `04_figures.py`).
+#    NetCDFs from `01_data_download.py`, drop the spin-up padding, and write each
+#    on its NATIVE grid — `data/clean/<storm>_waverys.nc` (0.2°) and
+#    `data/clean/<storm>_regional.nc` (fine). No regridding: `03_analysis.py`
+#    samples each product natively per site polygon (three-tier sampling).
 # 2. **Natura 2000 sites.** Merge two EEA distributions: the spatial GeoPackage
 #    (polygons, EPSG:3035) with the tabular CSVs (Standard Data Form — Annex I
 #    habitats + Annex II species + marine flag). Reproject to WGS84, filter to
@@ -83,33 +82,18 @@ WAVE_BBOXES = {
 }
 
 # %% [markdown]
-# ## Wave-product alignment
+# ## Wave products — keep each on its NATIVE grid
 #
-# WAVERYS (0.2°) is the common grid. The regional product (1/36° IBI for
-# Xynthia, ~1.5 km NWS for Xaver, 1/24° MED for Gloria) is regridded onto
-# WAVERYS via bilinear interpolation. Per `docs/phase1-plan.md` § 3, native
-# regional resolution is preserved separately for the spatial maps in
-# `04_figures.py`; the headline statistic uses the common-grid version.
+# We deliberately do **not** regrid the regional product onto the coarse WAVERYS
+# grid. Regridding the fine regional (1/36° IBI, ~1.5 km NWS, 1/24° MED) down to
+# WAVERYS's 0.2° (~22 km) grid both (a) smooths away the nearshore structure that
+# is the regional product's entire value — understating the very inter-product
+# difference this study measures — and (b) propagates coastal land-mask NaN,
+# dropping ~half the marine sites. Instead `03_analysis.py` samples each product
+# at its own native resolution per site polygon (see its three-tier sampling).
+# Here we just trim each product to the storm window and save it natively.
 
 # %%
-def _try_xesmf_bilinear(src: xr.Dataset, target: xr.Dataset) -> xr.Dataset:
-    """Bilinear regrid src→target via xesmf if installed, else xarray.interp.
-
-    xesmf depends on the ESMF C library and may fail to import on some
-    platforms; xarray.interp is the documented fallback (DOMAIN.md § pixi
-    fallback). Bilinear-only, no conservative — adequate for inter-product
-    comparison at site polygons.
-    """
-    try:
-        import xesmf as xe
-    except ImportError:
-        return src.interp(
-            longitude=target["longitude"], latitude=target["latitude"]
-        )
-    regridder = xe.Regridder(src, target, "bilinear", periodic=False)
-    return regridder(src, keep_attrs=True)
-
-
 def _trim_window(ds: xr.Dataset, t0: str, t1: str) -> xr.Dataset:
     """Slice on the dataset's time coordinate (CMEMS uses 'time')."""
     time_name = "time" if "time" in ds.coords else next(
@@ -128,46 +112,24 @@ def _hs_var(ds: xr.Dataset) -> str:
     )
 
 
-def align_storm(storm_key: str) -> Path:
-    """WAVERYS + regional → common (WAVERYS) grid, trimmed to storm window."""
-    waverys = xr.open_dataset(RAW_DIR / f"waverys_{storm_key}.nc")
-    regional = xr.open_dataset(RAW_DIR / f"regional_{storm_key}.nc")
-
+def save_native(storm_key: str) -> None:
+    """Trim WAVERYS + regional to the storm window; save each on its native grid."""
     t0, t1 = STORM_WINDOWS[storm_key]
-    waverys = _trim_window(waverys, t0, t1)
-    regional = _trim_window(regional, t0, t1)
-
-    regional_on_waverys = _try_xesmf_bilinear(regional, waverys)
-
-    waverys_hs_name = _hs_var(waverys)
-    regional_hs_name = _hs_var(regional_on_waverys)
-    aligned = xr.Dataset(
-        {
-            "waverys_hs": waverys[waverys_hs_name],
-            "regional_hs": regional_on_waverys[regional_hs_name],
-        },
-        attrs={
-            "title": f"Aligned WAVERYS + regional wave heights — {storm_key}",
-            "storm": storm_key,
-            "storm_window": f"{t0}/{t1}",
-            "regridding": "regional → WAVERYS, bilinear",
-        },
-    )
-
-    out = CLEAN_DIR / f"{storm_key}_aligned.nc"
-    aligned.to_netcdf(out)
-    # Preserve the native-resolution regional Hs separately — spatial maps use it.
-    regional[[regional_hs_name]].rename(
-        {regional_hs_name: "regional_hs_native"}
-    ).to_netcdf(CLEAN_DIR / f"{storm_key}_regional_native.nc")
-    print(f"  → {out.name}  ({out.stat().st_size / 1e6:.1f} MB)")
-    return out
+    for product, raw_name in (("waverys", "waverys"), ("regional", "regional")):
+        ds = _trim_window(
+            xr.open_dataset(RAW_DIR / f"{raw_name}_{storm_key}.nc"), t0, t1
+        )
+        hs = _hs_var(ds)
+        out_var = f"{product}_hs"
+        out = CLEAN_DIR / f"{storm_key}_{product}.nc"
+        ds[[hs]].rename({hs: out_var}).to_netcdf(out)
+        print(f"  → {out.name}  ({out.stat().st_size / 1e6:.1f} MB, native grid)")
 
 
 # %%
 for storm_key in ACTIVE_STORMS:
-    print(f"Aligning {storm_key}...")
-    align_storm(storm_key)
+    print(f"Saving native grids for {storm_key}...")
+    save_native(storm_key)
 
 # %% [markdown]
 # ## Natura 2000 — extract two archives
