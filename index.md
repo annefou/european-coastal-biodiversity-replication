@@ -43,6 +43,6 @@ The published chain is listed in [`nanopubs/PUBLISHED.md`](nanopubs/PUBLISHED.md
 
 If you use this work, please cite:
 
-- This software: [`CITATION.cff`](CITATION.cff) → concept DOI [{{ZENODO_DOI}}]({{ZENODO_DOI}}).
+- This software: [`CITATION.cff`](CITATION.cff) → concept DOI [10.5281/zenodo.20473380](https://doi.org/10.5281/zenodo.20473380).
 - The data deposit: [10.5281/zenodo.20364376](https://doi.org/10.5281/zenodo.20364376).
 - The prior work this study qualifies (Loveland et al. 2024): [10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387).

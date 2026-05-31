@@ -32,10 +32,10 @@ URI of the Replication Study published in step 04. Pull from `nanopubs/PUBLISHED
 
 ### Repository URL (text input, required)
 
-> Per `docs/` + auto-memory, `hasOutcomeRepository` should be the **software Zenodo concept DOI**, which is minted at the Phase 4 GitHub release. Replace the GitHub URL below with that DOI at Phase 4. (The *data* deposit has its own concept DOI — `10.5281/zenodo.20364376` — but that is the data record, not the software archive.)
+> Per `docs/` + auto-memory, `hasOutcomeRepository` is the **software Zenodo concept DOI** (resolves to the latest version). The matching *data* deposit has its own concept DOI `10.5281/zenodo.20364376`; the GitHub source mirror is at `https://github.com/annefou/european-coastal-biodiversity-replication`.
 
 ```
-https://github.com/annefou/european-coastal-biodiversity-replication
+https://doi.org/10.5281/zenodo.20473380
 ```
 
 ### Completion date (date picker, required)

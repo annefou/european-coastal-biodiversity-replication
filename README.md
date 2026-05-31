@@ -4,7 +4,7 @@
 [![Jupyter Book](https://github.com/annefou/european-coastal-biodiversity-replication/actions/workflows/jupyter-book.yml/badge.svg)](https://annefou.github.io/european-coastal-biodiversity-replication/)
 [![Docker](https://github.com/annefou/european-coastal-biodiversity-replication/actions/workflows/docker.yml/badge.svg)](https://github.com/annefou/european-coastal-biodiversity-replication/pkgs/container/european-coastal-biodiversity-replication)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/{{ZENODO_DOI}}.svg)]({{ZENODO_DOI}})
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20473380.svg)](https://doi.org/10.5281/zenodo.20473380)
 [![FAIR4RS](https://img.shields.io/badge/FAIR4RS-conformant-brightgreen)](docs/fair4rs-checklist.md)
 [![FORRT](https://img.shields.io/badge/FORRT-replication-blue)](https://forrt.org/)
 [![Science Live](https://img.shields.io/badge/Science%20Live-nanopub%20chain-purple)](nanopubs/PUBLISHED.md)
@@ -130,7 +130,7 @@ For lower-level nanopub work — retraction, superseding, batch publishing — s
 
 If you use this work, please cite:
 
-- This software: [`CITATION.cff`](CITATION.cff) → concept DOI [{{ZENODO_DOI}}]({{ZENODO_DOI}})
+- This software: [`CITATION.cff`](CITATION.cff) → concept DOI [10.5281/zenodo.20473380](https://doi.org/10.5281/zenodo.20473380)
 - The data deposit: [10.5281/zenodo.20364376](https://doi.org/10.5281/zenodo.20364376)
 - The prior work this study qualifies (Loveland et al. 2024): [10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)
 
