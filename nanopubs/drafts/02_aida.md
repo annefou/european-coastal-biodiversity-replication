@@ -21,7 +21,7 @@ Replacing a global ocean wave reanalysis with a matched higher-resolution region
 Predefined topic vocabulary — labels to pick from the dropdown (pick whichever the dropdown offers; these are the intended topics):
 
 ```
-marine biodiversity; wave modelling / significant wave height; Natura 2000; Copernicus Marine Service; storm impacts
+marine biodiversity; significant wave height; Natura 2000; Copernicus Marine Service; storm impacts
 ```
 
 ### Relates to this nanopublication (text input, required)
