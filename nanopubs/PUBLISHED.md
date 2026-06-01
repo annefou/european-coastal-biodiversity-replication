@@ -30,19 +30,23 @@ All six steps were published on **2026-06-01** and the chain has been verified i
 - **05 Replication Outcome** — verdict **Validated** (Moderate confidence). 73 % of biodiversity-weighted resolvable sites show attribution differing at X = 0.4 m, robust across the threshold sweep, present in all three regimes (Xaver 83 %, Gloria 82 %, Xynthia 60 %). Repository identifier is the software Zenodo concept DOI [10.5281/zenodo.20473380](https://doi.org/10.5281/zenodo.20473380); the data deposit DOI is [10.5281/zenodo.20364376](https://doi.org/10.5281/zenodo.20364376).
 - **06 CiTO Citation** — `qualifies` Loveland et al. 2024 ([10.1016/j.ocemod.2024.102387](https://doi.org/10.1016/j.ocemod.2024.102387)): the adequacy of a coarser or simplified wave representation is application- and regime-dependent. Also `extends` the prior [coastal-rom replication chain](https://w3id.org/sciencelive/np/RAuvGPQk_nxEcBWzADcLnyfqgjJ9Hr2aSWxwof2sDAung).
 
-## How to view
+## How to view and fetch
 
-Each URI resolves through the Science Live viewer:
+**Human-readable view** — open any URI in the Science Live viewer:
 
 ```
 https://platform.sciencelive4all.org/np/?uri=<full-URI>
 ```
 
-The raw signed TriG is at:
+**Citing** — use the URI itself (the `https://w3id.org/sciencelive/np/RA…` form). It is a persistent identifier intended to survive the underlying server choice.
+
+**Programmatic fetch of the raw signed TriG.** The nanopub specification says you should be able to content-negotiate against the persistent URI (`curl -H "Accept: application/trig" <URI>`); as of June 2026 the Science Live resolver returns the viewer HTML regardless of `Accept`, so that route does not yet work. Until it does, the Knowledge Pixels registry serves the TriG directly via:
 
 ```
-https://registry.knowledgepixels.com/np/<RA-hash>.trig
+GET https://registry.knowledgepixels.com/np/<RA-hash>.trig
 ```
+
+(GET only — the same endpoint currently rejects HEAD. The KP registry is one specific nanopub server; if it is unavailable, the same nanopub can be fetched from any other server in the nanopub network that has replicated it.)
 
 ## Drafts and form structure
 
